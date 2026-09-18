@@ -1,0 +1,36 @@
+{
+  "caseStudy": "Dental Office Operations Control Room",
+  "purpose": "Recruiter-facing case study for AI implementation and solutions-engineering judgment.",
+  "source": {
+    "repository": "/Users/dylanwalls/workspace/dental-office-platform",
+    "referenceWorktree": "/Users/dylanwalls/workspace/dental-office-platform/.worktrees/integration-command-center",
+    "referenceCommit": "8c47c3d",
+    "dataPolicy": "All page values are sanitized synthetic fixtures; no PHI, live integrations, or production outcomes are represented."
+  },
+  "claimLedger": [
+    {
+      "claim": "A staff-facing command center can surface appointment throughput, operatory conflicts, intake handoffs, unsigned clinical notes, and claim-readiness signals in one read-only projection.",
+      "classification": "verified source behavior",
+      "evidence": "apps/staff/src/app/command-center/command-center-data.ts and render-command-center.ts",
+      "pageTreatment": "Shown as the local walkthrough's queue, appointment, intake, and clinical signal states."
+    },
+    {
+      "claim": "The source UI distinguishes recorded production from planned care and labels claim signals as mock or not connected.",
+      "classification": "verified source behavior",
+      "evidence": "render-command-center.ts revenue snapshot and claim readiness renderer",
+      "pageTreatment": "Referenced as a boundary decision; no financial metric is presented as a live outcome here."
+    },
+    {
+      "claim": "A browser-local walkthrough can make a human review seam visible without writing to a backend.",
+      "classification": "observed prototype",
+      "evidence": "This route's deterministic state machine; no network requests or persistence",
+      "pageTreatment": "The handoff transition is explicitly labeled local, synthetic, and not persisted."
+    },
+    {
+      "claim": "A production implementation should connect the read model to authorization, audit, persistence, and human approval services.",
+      "classification": "proposed follow-up",
+      "evidence": "Architecture narrative only; not implemented in this portfolio route",
+      "pageTreatment": "Shown with dashed boundaries and a proposed label."
+    }
+  ]
+}

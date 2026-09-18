@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A recruiter-facing case study of a synthetic dental-office operations control room, built to show AI implementation judgment, evidence boundaries, and human review seams.">
+  <title>Dental Office Operations · Dylan Walls</title>
+  <style>
+    :root {
+      --ink: #1c2528;
+      --ink-soft: #405154;
+      --paper: #f4f0e8;
+      --paper-deep: #e8e0d3;
+      --white: #fffdf8;
+      --line: #cfc7ba;
+      --line-dark: #8f9a96;
+      --signal: #0f716c;
+      --signal-dark: #0a4f4b;
+      --signal-pale: #d6eeea;
+      --amber: #a45b18;
+      --amber-pale: #fae7cb;
+      --red: #9e3d32;
+      --red-pale: #f8dfda;
+      --shadow: 0 20px 50px rgba(28, 37, 40, .09);
+      --max: 1180px;
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      opacity: .25;
+      background-image: linear-gradient(rgba(28,37,40,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(28,37,40,.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, #000 0, transparent 70%);
+    }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a:focus-visible, button:focus-visible, summary:focus-visible {
+      outline: 3px solid var(--amber);
+      outline-offset: 4px;
+    }
+    button, .button { min-height: 44px; }
+    .skip-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 20;
+      padding: 10px 14px;
+      background: var(--ink);
+      color: var(--white);
+      transform: translateY(-160%);
+      transition: transform .18s ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
+    .page { width: min(calc(100% - 40px), var(--max)); margin: 0 auto; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 76px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 750; letter-spacing: .04em; }
+    .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--signal); border-radius: 50%; color: var(--signal-dark); font-size: 11px; }
+    .topbar-meta { display: flex; align-items: center; gap: 16px; color: var(--ink-soft); font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .topbar-meta a { text-underline-offset: 3px; }
+    .eyebrow { margin: 0; color: var(--signal-dark); font: 700 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; display: inline-block; width: 24px; height: 1px; margin: 0 10px 3px 0; background: currentColor; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: clamp(34px, 6vw, 84px); align-items: center; padding: clamp(60px, 9vw, 112px) 0 98px; }
+    h1, h2, h3, h4, p { margin-top: 0; }
+    h1, h2, h3, h4 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.035em; }
+    h1 { max-width: 760px; margin: 21px 0 25px; font-size: clamp(47px, 7vw, 85px); line-height: .99; }
+    .hero-lede { max-width: 650px; margin-bottom: 28px; color: var(--ink-soft); font-size: clamp(18px, 2.2vw, 22px); line-height: 1.5; }
+    .hero-actions, .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid transparent; border-radius: 5px; padding: 10px 15px; font-weight: 750; font-size: 14px; text-decoration: none; cursor: pointer; }
+    .button-primary { background: var(--signal); color: var(--white); }
+    .button-primary:hover { background: var(--signal-dark); }
+    .button-quiet { border-color: var(--line-dark); background: transparent; color: var(--ink); }
+    .button-quiet:hover { border-color: var(--signal); color: var(--signal-dark); }
+    .button-small { min-height: 40px; padding: 8px 12px; font-size: 12px; }
+    .hero-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 660px; gap: 1px; margin: 44px 0 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .hero-fact { min-width: 0; padding: 16px 16px 17px 0; border-right: 1px solid var(--line); }
+    .hero-fact:nth-child(even) { padding-left: 16px; border-right: 0; }
+    .hero-fact dt { margin-bottom: 5px; color: var(--ink-soft); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; }
+    .hero-fact dd { margin: 0; font-weight: 700; }
+    .hero-screen { position: relative; min-width: 0; padding: 16px; border: 1px solid var(--line-dark); background: var(--white); box-shadow: var(--shadow); }
+    .hero-screen::before { content: "LOCAL REVIEW SURFACE"; display: block; padding-bottom: 13px; color: var(--ink-soft); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
+    .screen-frame { border: 1px solid var(--line); background: var(--paper); }
+    .screen-header { display: flex; justify-content: space-between; gap: 10px; padding: 15px; border-bottom: 1px solid var(--line); }
+    .screen-header strong { font: 18px Georgia, serif; }
+    .screen-label { color: var(--signal-dark); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; }
+    .screen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
+    .screen-cell { min-width: 0; padding: 16px; background: var(--white); }
+    .screen-cell span { display: block; color: var(--ink-soft); font-size: 11px; }
+    .screen-cell strong { display: block; margin-top: 5px; font-size: 23px; }
+    .screen-list { margin: 0; padding: 0; list-style: none; }
+    .screen-list li { display: flex; gap: 10px; align-items: flex-start; padding: 14px 15px; border-top: 1px solid var(--line); font-size: 13px; }
+    .screen-list li:first-child { border-top: 0; }
+    .status-dot { flex: 0 0 auto; width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; background: var(--amber); }
+    .status-dot.good { background: var(--signal); }
+    .screen-list small { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 11px; }
+    .screen-provenance { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 15px; border-top: 1px solid var(--line); background: #fbf8f1; }
+    .screen-provenance span { color: var(--ink-soft); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .screen-provenance span::before { content: "✓"; margin-right: 6px; color: var(--signal); font-weight: 700; }
+    .section { padding: 96px 0; border-top: 1px solid var(--line); }
+    .section-heading { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: 38px; align-items: end; margin-bottom: 44px; }
+    h2 { margin-bottom: 0; font-size: clamp(34px, 5vw, 58px); line-height: 1.02; }
+    h3 { margin-bottom: 10px; font-size: 28px; line-height: 1.1; }
+    h4 { margin-bottom: 8px; font-size: 20px; }
+    .section-intro { max-width: 580px; margin-bottom: 0; color: var(--ink-soft); font-size: 17px; }
+    .brief-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .brief-card { min-width: 0; padding: 26px; background: var(--white); }
+    .brief-card .card-index { display: block; margin-bottom: 22px; color: var(--signal-dark); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; }
+    .brief-card p { margin-bottom: 0; color: var(--ink-soft); font-size: 14px; }
+    .provenance-strip { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; }
+    .badge { display: inline-flex; align-items: center; min-height: 27px; border: 1px solid currentColor; border-radius: 999px; padding: 4px 9px; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .badge-verified { color: var(--signal-dark); background: var(--signal-pale); }
+    .badge-synthetic { color: var(--amber); background: var(--amber-pale); }
+    .badge-observed { color: #5e4b9b; background: #ece7fb; }
+    .badge-proposed { color: var(--red); background: var(--red-pale); }
+    .walkthrough { background: rgba(255,253,248,.45); }
+    .walkthrough-layout { display: grid; grid-template-columns: minmax(0, 1.24fr) minmax(260px, .76fr); gap: 28px; align-items: start; }
+    .demo-shell { min-width: 0; border: 1px solid var(--ink); background: var(--white); box-shadow: var(--shadow); }
+    .demo-toolbar { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 13px 15px; border-bottom: 1px solid var(--ink); background: var(--ink); color: var(--white); }
+    .demo-toolbar strong { display: block; font-size: 13px; }
+    .demo-toolbar span { display: block; margin-top: 2px; color: #c3cecb; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .demo-toolbar .button { border-color: #82908c; color: var(--white); }
+    .demo-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border-bottom: 1px solid var(--line); background: var(--line); }
+    .progress-step { min-width: 0; padding: 14px 10px; background: var(--paper); color: var(--ink-soft); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; }
+    .progress-step span { display: block; width: 20px; height: 20px; margin-bottom: 7px; border: 1px solid var(--line-dark); border-radius: 50%; text-align: center; line-height: 18px; }
+    .progress-step.is-current { background: var(--signal-pale); color: var(--signal-dark); }
+    .progress-step.is-current span, .progress-step.is-done span { border-color: var(--signal); background: var(--signal); color: var(--white); }
+    .demo-view { min-height: 328px; padding: clamp(22px, 4vw, 36px); }
+    .demo-view[data-mode="loading"] { display: grid; place-items: center; text-align: center; }
+    .demo-view[data-mode="empty"], .demo-view[data-mode="error"], .demo-view[data-mode="success"] { min-height: 328px; }
+    .demo-kicker { margin-bottom: 9px; color: var(--signal-dark); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; }
+    .demo-view h3 { margin-bottom: 9px; }
+    .demo-copy { max-width: 650px; margin-bottom: 24px; color: var(--ink-soft); }
+    .demo-record { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 17px; align-items: start; padding: 18px 0; border-top: 1px solid var(--line); }
+    .demo-record:first-of-type { border-top: 0; }
+    .demo-record strong { display: block; font-size: 16px; }
+    .demo-record p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+    .demo-record small { display: block; margin-top: 7px; color: var(--ink-soft); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .demo-record .badge { align-self: start; white-space: nowrap; }
+    .demo-action-bar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 15px; border-top: 1px solid var(--line); background: var(--paper); }
+    .demo-action-note { align-self: center; color: var(--ink-soft); font-size: 12px; }
+    .state-lab { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 15px; border-top: 1px dashed var(--line-dark); background: #fbf8f1; }
+    .state-lab-label { margin-right: 4px; color: var(--ink-soft); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .state-lab .button { min-height: 36px; padding: 6px 9px; font-size: 11px; }
+    .loading-mark { width: 42px; height: 42px; margin: 0 auto 15px; border: 3px solid var(--signal-pale); border-top-color: var(--signal); border-radius: 50%; animation: spin 1s linear infinite; }
+    .state-message { max-width: 560px; margin: 0 auto 24px; padding: 17px; border-left: 4px solid var(--signal); background: var(--signal-pale); }
+    .state-message.error { border-left-color: var(--red); background: var(--red-pale); }
+    .state-message.empty { border-left-color: var(--amber); background: var(--amber-pale); }
+    .state-message strong { display: block; margin-bottom: 4px; }
+    .walkthrough-notes { min-width: 0; }
+    .note-panel { padding: 22px; border-top: 1px solid var(--line-dark); }
+    .note-panel:first-child { border-top: 0; }
+    .note-panel h3 { font-size: 23px; }
+    .note-panel p, .note-panel li { color: var(--ink-soft); font-size: 14px; }
+    .note-panel ul { margin: 0; padding-left: 20px; }
+    .note-panel li + li { margin-top: 10px; }
+    .boundary { padding: 14px; border: 1px dashed var(--line-dark); background: var(--paper-deep); color: var(--ink-soft); font-size: 12px; }
+    .boundary strong { display: block; margin-bottom: 4px; color: var(--ink); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; }
+    .architecture-layout { display: grid; grid-template-columns: minmax(0, 1.16fr) minmax(260px, .84fr); gap: 30px; align-items: start; }
+    .architecture-figure { min-width: 0; padding: clamp(16px, 3vw, 28px); border: 1px solid var(--line-dark); background: var(--white); }
+    .architecture-figure figcaption { margin-bottom: 18px; color: var(--ink-soft); font-size: 13px; }
+    .architecture-canvas { display: block; width: 100%; height: auto; }
+    .architecture-canvas text { fill: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    .architecture-canvas .node { fill: var(--paper); stroke: var(--line-dark); stroke-width: 1.2; }
+    .architecture-canvas .node-signal { fill: var(--signal-pale); stroke: var(--signal); }
+    .architecture-canvas .node-proposed { fill: var(--amber-pale); stroke: var(--amber); stroke-dasharray: 5 4; }
+    .architecture-canvas .flow { fill: none; stroke: var(--signal); stroke-width: 1.6; marker-end: url(#arrow); }
+    .architecture-canvas .flow-proposed { stroke: var(--amber); stroke-dasharray: 5 4; }
+    .architecture-copy { display: grid; gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .architecture-copy article { padding: 21px; background: var(--white); }
+    .architecture-copy h3 { font-size: 22px; }
+    .architecture-copy p { margin-bottom: 0; color: var(--ink-soft); font-size: 14px; }
+    .narrative-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .narrative-card { min-width: 0; padding: 26px; background: var(--white); }
+    .narrative-card h3 { font-size: 25px; }
+    .narrative-card p, .narrative-card li { color: var(--ink-soft); font-size: 14px; }
+    .narrative-card ul { margin: 0; padding-left: 19px; }
+    .narrative-card li + li { margin-top: 9px; }
+    .evidence-stack { display: grid; gap: 10px; }
+    details { border: 1px solid var(--line); background: var(--white); }
+    summary { min-height: 52px; padding: 15px 18px; cursor: pointer; font-weight: 750; list-style-position: inside; }
+    details > div { padding: 0 18px 18px; color: var(--ink-soft); font-size: 14px; }
+    details p:last-child { margin-bottom: 0; }
+    .claim-table-wrap { overflow-x: auto; border: 1px solid var(--line-dark); background: var(--white); }
+    .claim-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 13px; }
+    .claim-table th, .claim-table td { padding: 15px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .claim-table th { color: var(--ink-soft); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .claim-table tr:last-child td { border-bottom: 0; }
+    .claim-table td p { margin: 0; }
+    .claim-table .badge { white-space: nowrap; }
+    .next-iteration { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 34px; align-items: start; }
+    .next-iteration h2 { max-width: 480px; }
+    .next-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: next; }
+    .next-list li { display: grid; grid-template-columns: 38px 1fr; gap: 13px; padding: 17px; border: 1px solid var(--line); background: var(--white); }
+    .next-list li::before { counter-increment: next; content: counter(next, decimal-leading-zero); color: var(--signal-dark); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .next-list strong { display: block; margin-bottom: 3px; }
+    .next-list span { color: var(--ink-soft); font-size: 13px; }
+    .footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px 0 42px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; }
+    .footer a { color: var(--signal-dark); text-underline-offset: 3px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+    @media (max-width: 860px) {
+      .hero, .walkthrough-layout, .architecture-layout, .next-iteration { grid-template-columns: 1fr; }
+      .hero { padding-top: 66px; }
+      .hero-screen { max-width: 680px; }
+      .section-heading { grid-template-columns: 1fr; gap: 18px; align-items: start; }
+    }
+    @media (max-width: 620px) {
+      .page { width: min(calc(100% - 28px), var(--max)); }
+      .topbar { min-height: 68px; }
+      .topbar-meta a { display: none; }
+      h1 { font-size: clamp(42px, 13vw, 65px); }
+      .hero { padding: 54px 0 68px; }
+      .hero-facts { grid-template-columns: 1fr; }
+      .hero-fact, .hero-fact:nth-child(even) { padding: 14px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+      .hero-fact:last-child { border-bottom: 0; }
+      .brief-grid, .narrative-grid { grid-template-columns: 1fr; }
+      .brief-card, .narrative-card { padding: 21px; }
+      .section { padding: 70px 0; }
+      .demo-progress { grid-template-columns: repeat(2, 1fr); }
+      .progress-step:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .demo-toolbar { align-items: flex-start; flex-direction: column; }
+      .demo-record { grid-template-columns: 1fr; gap: 10px; }
+      .demo-record .badge { justify-self: start; }
+      .demo-action-bar { align-items: stretch; flex-direction: column; }
+      .demo-action-note { align-self: auto; }
+      .footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to case study</a>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="../"><span class="brand-mark" aria-hidden="true">DW</span><span>Dylan Walls / AI systems</span></a>
+      <div class="topbar-meta"><a href="../">Back to portfolio</a><span>Case study 01 · local review</span></div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="case-study-title">
+        <div>
+          <p class="eyebrow">Flagship case study / AI implementation</p>
+          <h1 id="case-study-title">Make the dental day legible before you automate it.</h1>
+          <p class="hero-lede">A calm, recruiter-facing walkthrough of how I translate a messy dental-office workflow into a bounded operating picture: queue the signal, preserve the boundary, and hand the decision to a human.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#walkthrough" data-start-walkthrough>Run the walkthrough <span aria-hidden="true">↓</span></a>
+            <a class="button button-quiet" href="#architecture">Inspect the architecture <span aria-hidden="true">→</span></a>
+          </div>
+          <dl class="hero-facts">
+            <div class="hero-fact"><dt>Project</dt><dd>Dental Office Operations Control Room</dd></div>
+            <div class="hero-fact"><dt>My ownership</dt><dd>Workflow framing, UI projection, evidence boundaries, QA</dd></div>
+            <div class="hero-fact"><dt>Recruiter lane</dt><dd>AI implementation · solutions engineering · platform operations</dd></div>
+            <div class="hero-fact"><dt>Stack surface</dt><dd>TypeScript source behaviors · static HTML/CSS/JS review artifact</dd></div>
+          </dl>
+        </div>
+
+        <aside class="hero-screen" aria-label="Sanitized command-center preview">
+          <div class="screen-frame">
+            <div class="screen-header"><strong>Practice Command Center</strong><span class="screen-label">DEMO MODE</span></div>
+            <div class="screen-grid">
+              <div class="screen-cell"><span>Open handoffs</span><strong>02</strong></div>
+              <div class="screen-cell"><span>Review seam</span><strong>Human</strong></div>
+            </div>
+            <ul class="screen-list">
+              <li><span class="status-dot"></span><div><strong>Intake needs review</strong><small>Synthetic Patient B · before arrival</small></div></li>
+              <li><span class="status-dot"></span><div><strong>Resource overlap</strong><small>Operatory 2 · staff decision required</small></div></li>
+              <li><span class="status-dot good"></span><div><strong>Clinical history preserved</strong><small>Unsigned note remains a follow-up signal</small></div></li>
+            </ul>
+            <div class="screen-provenance" aria-label="Demo boundaries"><span>Synthetic fixture</span><span>No PHI</span><span>Read-only</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section" aria-labelledby="brief-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">01 / brief</p><h2 id="brief-title">A control room, not a dental marketing page.</h2></div>
+          <p class="section-intro">The design goal is not to make the practice look busy. It is to make operational judgment visible: what is known, what needs a person, and what the system must refuse to imply.</p>
+        </div>
+        <div class="brief-grid">
+          <article class="brief-card"><span class="card-index">01 / PROBLEM</span><h3>Signals are distributed.</h3><p>Appointments, intake completion, resource conflicts, clinical follow-up, and billing readiness are different workflows. A useful surface should connect the handoff without pretending they share one source of truth.</p><div class="provenance-strip"><span class="badge badge-verified">Verified behavior</span></div></article>
+          <article class="brief-card"><span class="card-index">02 / OUTCOME</span><h3>Reviewable next action.</h3><p>The walkthrough moves one synthetic case from an operations queue to an intake signal, then to a clinical signal and a human review handoff. Every transition is visible and reversible.</p><div class="provenance-strip"><span class="badge badge-observed">Observed prototype</span></div></article>
+          <article class="brief-card"><span class="card-index">03 / GUARDRAIL</span><h3>Boundaries stay on screen.</h3><p>No PHI, claims, payments, signatures, persistence, or production outcome is hidden behind the interaction. The page is a browser-local read-model demonstration.</p><div class="provenance-strip"><span class="badge badge-synthetic">Synthetic only</span></div></article>
+        </div>
+      </section>
+
+      <section class="section walkthrough" id="walkthrough" aria-labelledby="walkthrough-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">02 / critical path</p><h2 id="walkthrough-title">Queue the signal. Keep the human in the loop.</h2></div>
+          <p class="section-intro">Start with the work queue, inspect the synthetic appointment and intake context, surface the clinical follow-up, and route a review request. This is a deterministic local fixture: no network, no save, no submission.</p>
+        </div>
+        <div class="walkthrough-layout">
+          <div class="demo-shell" data-demo>
+            <div class="demo-toolbar"><div><strong>Dental Office Operations / local walkthrough</strong><span data-demo-status>Local fixture ready · synthetic only</span></div><button class="button button-quiet button-small" type="button" data-action="reset">Reset walkthrough</button></div>
+            <div class="demo-progress" aria-label="Walkthrough progress" data-progress></div>
+            <div class="demo-view" data-demo-view data-mode="ready" aria-live="polite"></div>
+            <div class="demo-action-bar"><span class="demo-action-note" data-demo-note>Nothing is saved or submitted from this surface.</span><button class="button button-primary" type="button" data-action="advance">Open operations queue <span aria-hidden="true">→</span></button></div>
+            <div class="state-lab" aria-label="Truthful local state previews"><span class="state-lab-label">State lab</span><button class="button button-quiet" type="button" data-state-preview="empty">Empty queue</button><button class="button button-quiet" type="button" data-state-preview="error">Unavailable source</button><button class="button button-quiet" type="button" data-state-preview="loading">Loading read-model</button></div>
+          </div>
+          <aside class="walkthrough-notes" aria-label="Walkthrough notes">
+            <div class="note-panel"><p class="eyebrow">What this proves</p><h3>Implementation judgment in four moves.</h3><ul><li>Use a read-only projection to orient staff before a write path exists.</li><li>Keep the state transition explicit instead of hiding automation behind a status badge.</li><li>Send clinical signals to human review; do not imply diagnosis or autonomous action.</li></ul></div>
+            <div class="note-panel"><div class="boundary"><strong>BOUNDARY / VERIFIED SOURCE → SYNTHETIC ADAPTER</strong>The source project supplies the command-center behaviors and statuses. This route adapts those behaviors into a local, sanitized fixture. It does not connect to the source app or any backend.</div></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="architecture" aria-labelledby="architecture-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">03 / architecture &amp; evidence</p><h2 id="architecture-title">Make the seams inspectable.</h2></div>
+          <p class="section-intro">The important architecture decision is not “where can AI go?” It is “where does a signal stop being a projection and require an authorized human or connected service?”</p>
+        </div>
+        <div class="architecture-layout">
+          <figure class="architecture-figure">
+            <figcaption><span class="badge badge-observed">Observed prototype</span> Data-flow map for the proposed control-room path. Solid arrows describe the browser-local demonstration; dashed arrows are follow-up seams.</figcaption>
+            <svg class="architecture-canvas" viewBox="0 0 760 410" role="img" aria-labelledby="architecture-svg-title architecture-svg-desc">
+              <title id="architecture-svg-title">Dental office operations data flow</title>
+              <desc id="architecture-svg-desc">Browser UI reads a bounded projection, passes through an API and workflow boundary, reaches proposed persistence, and stops at a human review seam.</desc>
+              <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#0f716c"></path></marker><marker id="arrow-proposed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#a45b18"></path></marker></defs>
+              <path class="flow" d="M190 115 H270"></path><path class="flow" d="M450 115 H530"></path><path class="flow flow-proposed" marker-end="url(#arrow-proposed)" d="M620 180 V255"></path><path class="flow flow-proposed" marker-end="url(#arrow-proposed)" d="M530 315 H450"></path><path class="flow" d="M360 255 V180"></path>
+              <rect class="node node-signal" x="25" y="65" width="165" height="100" rx="8"></rect><text x="42" y="94" font-size="12" font-weight="700">BROWSER UI</text><text x="42" y="120" font-size="14">Command center</text><text x="42" y="143" font-size="11">Queue · states · reset</text>
+              <rect class="node" x="270" y="65" width="180" height="100" rx="8"></rect><text x="288" y="94" font-size="12" font-weight="700">API / DATA BOUNDARY</text><text x="288" y="120" font-size="14">Bounded projection</text><text x="288" y="143" font-size="11">Validated read model</text>
+              <rect class="node" x="530" y="65" width="180" height="100" rx="8"></rect><text x="548" y="94" font-size="12" font-weight="700">WORKFLOW LOGIC</text><text x="548" y="120" font-size="14">Signal classification</text><text x="548" y="143" font-size="11">Handoff / no auto-write</text>
+              <rect class="node node-proposed" x="530" y="255" width="180" height="100" rx="8"></rect><text x="548" y="284" font-size="12" font-weight="700">PERSISTENCE BOUNDARY</text><text x="548" y="310" font-size="14">Audit + records</text><text x="548" y="333" font-size="11">PROPOSED · not connected</text>
+              <rect class="node node-signal" x="190" y="255" width="170" height="100" rx="8"></rect><text x="208" y="284" font-size="12" font-weight="700">HUMAN REVIEW</text><text x="208" y="310" font-size="14">Clinical / ops owner</text><text x="208" y="333" font-size="11">Approve · resolve · amend</text>
+              <text x="205" y="104" font-size="10" fill="#0f716c">read</text><text x="464" y="104" font-size="10" fill="#0f716c">classify</text><text x="640" y="224" font-size="10" fill="#a45b18">future write</text><text x="445" y="304" font-size="10" fill="#a45b18">audit trail</text><text x="370" y="230" font-size="10" fill="#0f716c">review request</text>
+            </svg>
+          </figure>
+          <div class="architecture-copy">
+            <article><p class="eyebrow">Boundary 01</p><h3>Read model first</h3><p>The source implementation uses a typed presentation projection with explicit safe states. That gives the UI a truthful loading, empty, or error posture before any clinical or financial value is shown.</p></article>
+            <article><p class="eyebrow">Boundary 02</p><h3>Human review is a state</h3><p>A queue item can be classified and routed without becoming a diagnosis, signature, claim, payment, or scheduling mutation. The demo ends at the handoff.</p></article>
+            <article><p class="eyebrow">Boundary 03</p><h3>Persistence is proposed</h3><p>Production work would add authorization, audit, idempotency, append-oriented clinical history, and recovery. Those are shown as a seam, not claimed as delivered here.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="narrative-title">
+        <div class="section-heading"><div><p class="eyebrow">04 / narrative</p><h2 id="narrative-title">The decisions behind the surface.</h2></div><p class="section-intro">A recruiter should be able to scan the story quickly and still find enough technical detail to ask a useful follow-up question.</p></div>
+        <div class="narrative-grid">
+          <article class="narrative-card"><p class="eyebrow">Problem</p><h3>Operational ambiguity has a cost.</h3><p>Staff do not need another dashboard full of counters. They need to know which signal is urgent, what context is safe to show, and who owns the next decision.</p></article>
+          <article class="narrative-card"><p class="eyebrow">Constraints</p><h3>Trust beats theater.</h3><ul><li>Synthetic records only; no PHI or copied production data.</li><li>No connected claims, payments, signatures, persistence, or live outcomes.</li><li>Mobile-safe, keyboard-accessible, and calm under reduced motion.</li></ul></article>
+          <article class="narrative-card"><p class="eyebrow">Approach</p><h3>Projection → signal → handoff.</h3><p>I kept the browser artifact small and deterministic while preserving the source behavior vocabulary: schedule/resource status, intake completion, clinical note follow-up, and honest not-connected states.</p></article>
+          <article class="narrative-card"><p class="eyebrow">Key decisions</p><h3>Make “not connected” useful.</h3><p>Unavailable data is a product state, not a blank card. Planned persistence is visually separated from observed prototype behavior so a recruiter can see where implementation work remains.</p></article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="evidence-title">
+        <div class="section-heading"><div><p class="eyebrow">05 / evidence &amp; QA</p><h2 id="evidence-title">Inspectable, not inflated.</h2></div><p class="section-intro">The source project has its own validation suite. This case study records what that evidence supports and what this static route adds as a review surface.</p></div>
+        <div class="evidence-stack">
+          <details open><summary>Verified source behaviors</summary><div><p>The source command-center projection renders deterministic synthetic practice context, appointment/resource statuses, attention items, unsigned-note follow-up, exact money fields, and claim-readiness labels. Its tests also cover safe states, escaping, navigation, and responsive contracts.</p><p><span class="badge badge-verified">Source evidence</span> Reference: integration-command-center worktree at commit <code>8c47c3d</code>.</p></div></details>
+          <details><summary>Observed prototype behavior on this route</summary><div><p>This page's walkthrough is intentionally browser-local. The four-step state machine, reset behavior, empty state, unavailable-source state, and loading state are implemented in inline JavaScript with no network reads and no storage writes.</p><p><span class="badge badge-observed">Route evidence</span> Verify by opening the walkthrough, advancing through the handoff, previewing state lab buttons, and resetting.</p></div></details>
+          <details><summary>What is explicitly not claimed</summary><div><p>This is not a HIPAA certification, production deployment, clinical decision support system, payment processor, clearinghouse connection, scheduling system, or measured customer outcome. It is a sanitized portfolio artifact.</p><p><span class="badge badge-proposed">Proposed follow-up</span> Connect only after authorization, audit, persistence, test, and operational recovery gates are defined.</p></div></details>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="claims-title">
+        <div class="section-heading"><div><p class="eyebrow">06 / claim ledger</p><h2 id="claims-title">Every claim has a lane.</h2></div><p class="section-intro">The ledger keeps verified source behavior, synthetic demo fixture, observed prototype behavior, and proposed follow-up separate.</p></div>
+        <div class="claim-table-wrap">
+          <table class="claim-table"><caption class="sr-only">Case study claim and provenance ledger</caption><thead><tr><th scope="col">Claim</th><th scope="col">Classification</th><th scope="col">Evidence / treatment</th></tr></thead><tbody>
+            <tr><td><p>Command-center projection surfaces operational, clinical follow-up, and claim-readiness signals.</p></td><td><span class="badge badge-verified">Verified source behavior</span></td><td><p>Source renderer and tests; represented here with sanitized fixture labels.</p></td></tr>
+            <tr><td><p>Walkthrough can route a signal to a human review seam without writing a record.</p></td><td><span class="badge badge-observed">Observed prototype</span></td><td><p>Deterministic local state machine in this route; resettable and no network.</p></td></tr>
+            <tr><td><p>Displayed people, appointment labels, counts, and statuses are real operational outcomes.</p></td><td><span class="badge badge-synthetic">Not claimed · synthetic only</span></td><td><p>All records are fictional fixture values and visibly marked as such.</p></td></tr>
+            <tr><td><p>Authorization, audit, persistence, and recovery seams should be connected next.</p></td><td><span class="badge badge-proposed">Proposed follow-up</span></td><td><p>Architecture map shows dashed, disconnected boundaries; no production implementation is implied.</p></td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="next-title">
+        <div class="next-iteration"><div><p class="eyebrow">07 / next iteration</p><h2 id="next-title">The next build earns its writes.</h2><p class="section-intro">The natural next step is not more visual polish. It is to make each proposed seam testable without losing the calm operator experience.</p></div><ol class="next-list"><li><div><strong>Connect an authorized read adapter.</strong><span>Define tenant/location scope, bounded payloads, source freshness, and failure behavior before adding live data.</span></div></li><li><div><strong>Make review and audit append-oriented.</strong><span>Record who acknowledged, resolved, amended, or rejected a signal; preserve clinical history instead of overwriting it.</span></div></li><li><div><strong>Exercise recovery and authorization.</strong><span>Test stale updates, duplicate delivery, unavailable dependencies, and cross-location access before a pilot.</span></div></li></ol></div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>© Dylan Walls · Dental Office Operations case study</span><span><a href="../">Return to portfolio</a> · local review artifact · synthetic data only</span></footer>
+  </div>
+  <script>
+    (() => {
+      const root = document.querySelector('[data-demo]');
+      if (!root) return;
+      const view = root.querySelector('[data-demo-view]');
+      const progress = root.querySelector('[data-progress]');
+      const status = root.querySelector('[data-demo-status]');
+      const note = root.querySelector('[data-demo-note]');
+      const advance = root.querySelector('[data-action="advance"]');
+      const launcher = document.querySelector('[data-start-walkthrough]');
+      const steps = [
+        {
+          label: 'Operations queue',
+          kicker: '01 / operations queue',
+          title: 'Start with the signal, not the screen count.',
+          copy: 'Two synthetic work items need a staff decision before the morning block. The projection tells us what is open and keeps the next action explicit.',
+          records: [
+            ['Synthetic Patient B', 'New-patient intake is incomplete before the 09:00 exam.', 'HIGH · INTAKE'],
+            ['Operatory 2', 'Two synthetic appointments overlap at 09:30.', 'HIGH · SCHEDULE']
+          ],
+          action: 'Open intake handoff',
+          note: 'Fixture state: queue is ready for review.'
+        },
+        {
+          label: 'Appointment / intake',
+          kicker: '02 / appointment + intake',
+          title: 'Context before action.',
+          copy: 'The appointment is visible alongside the intake boundary. A staff member can review the missing intake context without implying that consent or a record was changed.',
+          records: [
+            ['09:00 · New patient exam', 'Synthetic Patient B · Dr. Maya Chen · Operatory 2', 'IN PROGRESS'],
+            ['Intake completion', 'Planned workflow only; no response, consent, or document is saved.', 'PLANNED · MOCK']
+          ],
+          action: 'Acknowledge intake signal',
+          note: 'Fixture state: intake context is visible; write path is disconnected.'
+        },
+        {
+          label: 'Clinical signal',
+          kicker: '03 / clinical follow-up',
+          title: 'Clinical context stops at human review.',
+          copy: 'The source behavior includes unsigned-note follow-up and an append-oriented note history. The demo surfaces the signal, but it does not sign, amend, diagnose, or recommend care.',
+          records: [
+            ['Unsigned clinical note', 'Synthetic Patient A · Dr. Maya Chen · 1h old', 'UNSIGNED · FOLLOW-UP'],
+            ['Clinical chart', 'Synthetic chart only; signatures, persistence, and audit are not connected.', 'MOCK UI ONLY']
+          ],
+          action: 'Route to human review',
+          note: 'Fixture state: clinical signal is routed, not resolved.'
+        },
+        {
+          label: 'Human review handoff',
+          kicker: '04 / handoff complete',
+          title: 'A review request, not an autonomous decision.',
+          copy: 'The operator now has a clear handoff: confirm the intake and resolve the schedule/clinical follow-up in the connected workflow. This static surface changes no record.',
+          records: [
+            ['Review request prepared', 'Operations owner · intake and clinical follow-up', 'READY · HUMAN REVIEW'],
+            ['System boundary', 'No backend request, persistence write, payment, claim, or signature occurred.', 'LOCAL ONLY']
+          ],
+          action: 'Reset walkthrough',
+          note: 'Success state: handoff prepared; human approval is still required.'
+        }
+      ];
+      let state = { mode: 'ready', step: 0 };
+      const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+      const renderProgress = () => {
+        progress.innerHTML = steps.map((step, index) => `<div class="progress-step ${index === state.step && state.mode === 'ready' ? 'is-current' : ''} ${index < state.step || state.mode === 'success' ? 'is-done' : ''}" ${index === state.step ? 'aria-current="step"' : ''}><span>${index < state.step || state.mode === 'success' ? '✓' : index + 1}</span>${esc(step.label)}</div>`).join('');
+      };
+      const renderStep = () => {
+        const step = steps[state.step];
+        view.dataset.mode = 'ready';
+        view.innerHTML = `<p class="demo-kicker">${esc(step.kicker)} · synthetic fixture</p><h3>${esc(step.title)}</h3><p class="demo-copy">${esc(step.copy)}</p>${step.records.map(([title, copy, badge]) => `<div class="demo-record"><div><strong>${esc(title)}</strong><p>${esc(copy)}</p><small>READ-ONLY PROJECTION · NO PHI</small></div><span class="badge ${badge.includes('HIGH') ? 'badge-synthetic' : badge.includes('READY') ? 'badge-verified' : 'badge-observed'}">${esc(badge)}</span></div>`).join('')}`;
+        status.textContent = step.note;
+        note.textContent = step.note;
+        advance.innerHTML = `${esc(step.action)} <span aria-hidden="true">${state.step === steps.length - 1 ? '↺' : '→'}</span>`;
+      };
+      const renderSpecial = (mode) => {
+        const messages = {
+          empty: ['empty', 'No synthetic queue seeded', 'The browser-local projection has no work items. No stale or inferred operational values are shown.'],
+          error: ['error', 'Read-model unavailable', 'The synthetic projection is unavailable in this preview. No fallback metrics or clinical values are displayed.'],
+          success: ['success', 'Review handoff prepared', 'The local walkthrough reached its boundary. Human approval is required; nothing was saved or submitted.']
+        };
+        const [className, title, copy] = messages[mode];
+        view.dataset.mode = mode;
+        view.innerHTML = `<div class="state-message ${className === 'success' ? '' : className}"><strong>${esc(title)}</strong><span>${esc(copy)}</span></div><div class="button-row"><button class="button button-primary" type="button" data-action="reset">Reset to synthetic queue</button></div>`;
+        status.textContent = mode === 'success' ? 'Success boundary reached · local only' : `${title} · truthful preview`;
+        note.textContent = mode === 'success' ? 'No write occurred. Human review remains required.' : 'State preview only; reset to return to the fixture.';
+        advance.innerHTML = 'Reset walkthrough <span aria-hidden="true">↺</span>';
+      };
+      const renderLoading = () => {
+        view.dataset.mode = 'loading';
+        view.innerHTML = '<div><div class="loading-mark" aria-hidden="true"></div><h3>Loading synthetic read-model</h3><p class="demo-copy">Local fixture hydration only. No network request is made and no record is available until the fixture is ready.</p></div>';
+        status.textContent = 'Loading local fixture · no network';
+        note.textContent = 'Loading state is local and deterministic.';
+        advance.innerHTML = 'Loading…';
+        advance.disabled = true;
+      };
+      const render = () => {
+        advance.disabled = false;
+        renderProgress();
+        if (state.mode === 'loading') return renderLoading();
+        if (state.mode === 'empty' || state.mode === 'error' || state.mode === 'success') return renderSpecial(state.mode);
+        renderStep();
+      };
+      const reset = () => { state = { mode: 'ready', step: 0 }; render(); };
+      const startLoading = (next) => {
+        state = { mode: 'loading', step: state.step };
+        render();
+        window.setTimeout(() => { state = next; render(); }, 380);
+      };
+      launcher?.addEventListener('click', (event) => {
+        event.preventDefault();
+        document.querySelector('#walkthrough')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.setTimeout(() => {
+          advance.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          advance.focus({ preventScroll: true });
+        }, 420);
+      });
+      root.addEventListener('click', (event) => {
+        const target = event.target.closest('button');
+        if (!target) return;
+        if (target.dataset.action === 'reset') return reset();
+        if (target.dataset.statePreview) {
+          const mode = target.dataset.statePreview;
+          if (mode === 'loading') return startLoading({ mode: 'ready', step: 0 });
+          state = { mode, step: 0 };
+          render();
+          return;
+        }
+        if (target.dataset.action === 'advance') {
+          if (state.mode === 'success' || state.step === steps.length - 1) return reset();
+          if (state.mode !== 'ready') return reset();
+          if (state.step === 0) return startLoading({ mode: 'ready', step: 1 });
+          if (state.step === 1) { state = { mode: 'ready', step: 2 }; render(); return; }
+          if (state.step === 2) { state = { mode: 'success', step: 3 }; render(); return; }
+        }
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>
