@@ -80,6 +80,17 @@ Browser verification boundary:
 
 No deployment, commit, push, merge, analytics, outreach, or production mutation is part of this assignment.
 
+## Changelog
+
+- 2026-09-23 — external audit fixes and visual refresh:
+  - Architecture diagram: dashed "proposed" flows now use the amber arrowhead via CSS (`marker-end` on `.flow-proposed`); previously the teal `.flow` rule overrode the presentation attribute.
+  - Reduced motion: the walkthrough launcher now honors `prefers-reduced-motion` for programmatic scrolling instead of forcing smooth scroll.
+  - Touch targets: all interactive controls are now 44px minimum (`.button-small` and state-lab buttons raised from 40px/36px), matching the verification note.
+  - Badge lanes: walkthrough record badges use a neutral `.badge-record` style; only severity (`HIGH`) keeps the amber synthetic badge. Fixture values no longer borrow the green "verified source behavior" lane.
+  - Added a `<noscript>` fallback that hides the interactive demo shell and explains the walkthrough needs JavaScript.
+  - Topbar navigation links now remain visible on small screens (only the decorative label collapses).
+  - Visual refresh: sticky blurred topbar, hero throughput strip, button/card hover lifts, progress-step current indicator, step fade transitions, table row hover, rounded panels, `::selection` tint, tabular numerals.
+
 ## Allowed change set
 
 The worktree root is the repository's `public` checkout. The only intended changed paths are:
